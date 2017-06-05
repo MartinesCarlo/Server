@@ -40,8 +40,10 @@ namespace Server
 
         private void ladeDatenbank()
         {
-            connection = new OleDbConnection(Properties.Settings.Default.db1);
+            //connection = new OleDbConnection(Properties.Settings.Default.db1);
+            connection = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=D:\\Schule\\CSharp\\Server\\Server\\bin\\Debug\\Datenbank.accdb;Persist Security Info = False; ");
             adapter = new OleDbDataAdapter("select * from spieler", connection);
+            ds = new DataSet();
             adapter.Fill(ds, "Spieler");
             DataTableReader reader = ds.Tables["Spieler"].CreateDataReader();
             vieleSpieler = new List<Spieler>();
@@ -55,7 +57,7 @@ namespace Server
         private void mainListener()
         {
             TcpListener listener = new TcpListener(ipAddress, serverListenPort);
-            System.Console.WriteLine("Listening on port " + serverListenPort + "...");
+            System.Console.WriteLine("[Listening on port " + serverListenPort + "...]");
             while (true)
             {
                 try
@@ -66,8 +68,8 @@ namespace Server
                     socket = listener.AcceptSocket();
                     vieleClients.Add(new ClientProxy(socket,this));
                     
-                    System.Console.WriteLine("Neue Client-Verbindung (" +
-                                "IP: " + socket.RemoteEndPoint + ", Port: " + ((IPEndPoint)socket.LocalEndPoint).Port.ToString() + ")");
+                    System.Console.WriteLine("[New client connected (" +
+                                "IP: " + socket.RemoteEndPoint + ", Port: " + ((IPEndPoint)socket.LocalEndPoint).Port.ToString() + ")]");
 
                 
 
@@ -84,25 +86,44 @@ namespace Server
                 }
             }
         }
-        public bool pruefeAnmeldung(String benutzer, String pw)
+        public bool pruefeAnmeldung(string benutzer, string pw)
         {
             Boolean ok = false;
-
             foreach(Spieler sp in vieleSpieler)
             {
-                if(sp.Benutzername.Equals(benutzer))
+                if(sp.Benutzername.Equals(benutzer.ToLower()) || sp.Kennwort.Equals(pw))
                 {
-                    if(sp.Kennwort.Equals(pw))
-                    {
-                        ok = true;
-                        break;
-                    }
-                }
-                    
+                    ok = true;
+                    break;                
+                }                  
             }
-
             return ok;
         }
+        public bool registrierung(string benutzer,string pw)
+        {
+            Boolean ok = false;           
+            if(pruefeBenutzername(benutzer))
+            {
+                vieleSpieler.Add(new Spieler(benutzer.ToLower(), pw));
+                ok = true;
+            }
+            return ok;
+        }
+
+        private bool pruefeBenutzername(string benutzer)
+        {
+            Boolean ok = true;
+            foreach (Spieler sp in vieleSpieler)
+            {
+                if (sp.Benutzername.Equals(benutzer.ToLower()))
+                {
+                    ok = false;
+                    break;
+                }
+            }
+            return ok;
+        }
+
         static void Main(string[] args)
         {
             new Server();

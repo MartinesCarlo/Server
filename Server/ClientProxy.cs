@@ -32,20 +32,13 @@ namespace Server
         {
             while(true)
             {
-                
-                Byte[] bytesReceived = new Byte[256];
-                int bytes = 0;
 
-                string nachricht;
-                
-                do
-                {
-                    bytes = socket.Receive(bytesReceived, bytesReceived.Length, 0);
-                    nachricht = nachricht + Encoding.ASCII.GetString(bytesReceived, 0, bytes);
-                }
-                while (bytes > 0);
-
-                pruefeNachricht(nachricht);
+                NetworkStream stream = new NetworkStream(socket);
+                byte[] buffer = new byte[socket.ReceiveBufferSize];
+                int data = stream.Read(buffer, 0, socket.ReceiveBufferSize);
+                string massege = Encoding.Unicode.GetString(buffer, 0, data);
+                //sendeNachricht("JA");
+                pruefeNachricht(massege);
             }
 
         }
@@ -58,22 +51,38 @@ namespace Server
                 case "ANM":         // Anmeldung
                     if(server.pruefeAnmeldung(n[1], n[2]))
                     {
-                        sendeNachricht("true");
+                        // Erfolgreich
+                        sendeNachricht("ANM#true");
                     }
                     else
                     {
-                        sendeNachricht("false");
+                        // Fehlgeschlagen
+                        sendeNachricht("ANM#false");
                     }
                     break;
-                        
-                    
+                case "REG":         // Registrierung
+                    if(server.registrierung(n[1], n[2]))
+                    {
+                        // Erfolgreich
+                        sendeNachricht("REG#true");
+                    }
+                    else
+                    {
+                        // Fehlgeschlagen
+                        sendeNachricht("REG#false");
+                    }
+                    break;                                         
             }
-
-        }
-
-        private void sendeNachricht(string v)
-        {
             
+        }
+        private void sendeNachricht(string n)
+        {
+            if(socket.Connected)
+            {
+                NetworkStream stream = new NetworkStream(socket);
+                Byte[] message = Encoding.Unicode.GetBytes(n);
+                stream.Write(message, 0, message.Length);
+            }
         }
     }
 }

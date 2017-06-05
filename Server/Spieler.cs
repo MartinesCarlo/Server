@@ -18,6 +18,11 @@ namespace Server
             Benutzername = b;
             Kennwort = k;
         }
+        public Spieler(string b, string k)
+        {
+            Benutzername = b;
+            Kennwort = k;
+        }
 
         public string Kennwort { get => kennwort; set => kennwort = value; }
         public string Benutzername { get => benutzername; set => benutzername = value; }
